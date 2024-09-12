@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+option csharp_namespace = "GrpcService";
+
+package user;
+
+service User {
+  rpc GetUserInfo (UserRequest) returns (UserReply);
+  rpc CreateUser (CreateUserRequest) returns (CreateUserReply);
+}
+
+message UserRequest {
+  int32 user_id = 1;
+}
+
+message UserReply {
+  string name = 1;
+  int32 age = 2;
+  repeated string roles = 3;
+  Address address = 4;
+  Coordinates coordinates = 5;
+}
+
+message CreateUserRequest {
+  string name = 1;
+  int32 age = 2;
+  repeated string roles = 3;
+  Address address = 4;
+  Coordinates coordinates = 5;
+}
+
+message CreateUserReply {
+  int32 user_id = 1;
+  string message = 2;
+}
+
+message Address {
+  string street = 1;
+  string city = 2;
+  string country = 3;
+}
+
+message Coordinates {
+  double latitude = 1;
+  double longitude = 2;
+}
