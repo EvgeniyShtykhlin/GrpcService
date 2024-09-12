@@ -1,5 +1,4 @@
 using Grpc.Core;
-using GrpcService;
 
 namespace GrpcService.Services
 {
@@ -13,9 +12,19 @@ namespace GrpcService.Services
 
         public override Task<HelloReply> SayHello(HelloRequest request, ServerCallContext context)
         {
+            _logger.LogWarning($"Message from client: {request.Name}");
             return Task.FromResult(new HelloReply
             {
                 Message = "Hello " + request.Name
+            });
+        }
+
+        public override Task<DayTimeReply> DayTime(DayTimeRequest request, ServerCallContext context)
+        {
+            _logger.LogWarning("Request day time from client1");
+            return Task.FromResult(new DayTimeReply
+            {
+                Message = DateTime.UtcNow.ToString()
             });
         }
     }
