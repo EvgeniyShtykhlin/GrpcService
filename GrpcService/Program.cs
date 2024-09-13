@@ -1,3 +1,4 @@
+using GrpcService.Intreafaces;
 using GrpcService.Services;
 
 namespace GrpcService
@@ -10,12 +11,13 @@ namespace GrpcService
 
             // Add services to the container.
             builder.Services.AddGrpc();
-
+            builder.Services.AddSingleton<IUserRepository, InMemoryUserRepository>();
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
             app.MapGrpcService<GreeterService>();
             app.MapGrpcService<UserService>();
+
             app.MapGet("/", () => "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
 
             app.Run();

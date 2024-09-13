@@ -1,39 +1,101 @@
-﻿using GrpcService;
-using Grpc.Core;
+﻿using Grpc.Core;
+using GrpcService.Models;
+using GrpcService.Intreafaces;
+using GrpcService;
 
 public class UserService : User.UserBase
 {
-    public override Task<UserReply> GetUserInfo(UserRequest request, ServerCallContext context)
+    private readonly IUserRepository _userRepository;
+
+    public UserService(IUserRepository userRepository)
     {
-        var userReply = new UserReply
+        _userRepository = userRepository;
+    }
+
+    public override async Task<UserReply> GetUserInfo(UserRequest request, ServerCallContext context)
+    {
+        var userModel = await _userRepository.GetUserByIdAsync(request.UserId);
+
+        if (userModel == null)
         {
-            Name = "John Doe",
-            Age = 30,
-            Roles = { "admin", "editor" },
+            throw new RpcException(new Status(StatusCode.NotFound, "User not found"));
+        }
+
+        return new UserReply
+        {
+            Name = userModel.Name,
+            Age = userModel.Age,
+            Roles = { userModel.Roles.ToArray() },
             Address = new Address
             {
-                Street = "123 Main St",
-                City = "New York",
-                Country = "USA"
+                Street = userModel.Address.Street,
+                City = userModel.Address.City,
+                Country = userModel.Address.Country
             },
             Coordinates = new Coordinates
             {
-                Latitude = 40.712776,
-                Longitude = -74.005974
+                Latitude = userModel.Coordinates.Latitude,
+                Longitude = userModel.Coordinates.Longitude
+            }
+        };
+    }
+
+    public override async Task<CreateUserReply> CreateUser(CreateUserRequest request, ServerCallContext context)
+    {
+        var userModel = new UserModel
+        {
+            Name = request.Name,
+            Age = request.Age,
+            Roles = request.Roles.ToList(),
+            Address = new Address
+            {
+                Street = request.Address.Street,
+                City = request.Address.City,
+                Country = request.Address.Country
+            },
+            Coordinates = new Coordinates
+            {
+                Latitude = request.Coordinates.Latitude,
+                Longitude = request.Coordinates.Longitude
             }
         };
 
-        return Task.FromResult(userReply);
-    }
+        var newUserId = await _userRepository.CreateUserAsync(userModel);
 
-    public override Task<CreateUserReply> CreateUser(CreateUserRequest request, ServerCallContext context)
-    {
-        var newUserId = 1001;
-
-        return Task.FromResult(new CreateUserReply
+        return new CreateUserReply
         {
             UserId = newUserId,
             Message = $"User {request.Name} created with ID {newUserId}"
-        });
+        };
+    }
+
+    public override async Task<GetAllUsersReply> GetAllUsers(Empty request, ServerCallContext context)
+    {
+        var users = await _userRepository.GetAllUsersAsync();
+
+        var reply = new GetAllUsersReply();
+        foreach (var user in users)
+        {
+            reply.Users.Add(new UserReply
+            {
+                Name = user.Name,
+                Age = user.Age,
+                Roles = { user.Roles.ToArray() },
+                Address = new Address
+                {
+                    Street = user.Address.Street,
+                    City = user.Address.City,
+                    Country = user.Address.Country
+                },
+                Coordinates = new Coordinates
+                {
+                    Latitude = user.Coordinates.Latitude,
+                    Longitude = user.Coordinates.Longitude
+                },
+                Id=user.Id
+            });
+        }
+
+        return reply;
     }
 }
